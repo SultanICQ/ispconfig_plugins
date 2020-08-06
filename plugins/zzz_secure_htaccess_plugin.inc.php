@@ -154,7 +154,7 @@ DATA;
         $ht_file = <<<DATA
 $begin_marker
 <IfModule mod_rewrite.c>
-# We set the variable "MAINDOMAIN" with the name of the default QA server.
+# We set the environment variable "MAIN_DOMAIN" with the name of the default QA server.
 # If the server's IP is not the QA server's one, the necessary domain is set.
 # This block is created when generating the protected directory.
 #
