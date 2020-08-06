@@ -31,14 +31,10 @@ class zzz_secure_htaccess_plugin
         Register for the events
         */
         $app->plugins->registerEvent('web_folder_user_insert', $this->plugin_name, 'web_folder_user');
-        $app->plugins->registerEvent('web_folder_user_insert', $this->plugin_name, 'add_main_domain_env');
         $app->plugins->registerEvent('web_folder_user_update', $this->plugin_name, 'web_folder_user');
-        $app->plugins->registerEvent('web_folder_user_update', $this->plugin_name, 'add_main_domain_env');
 
         $app->plugins->registerEvent('web_folder_insert', $this->plugin_name, 'web_folder_update');
-        $app->plugins->registerEvent('web_folder_insert', $this->plugin_name, 'add_main_domain_env');
         $app->plugins->registerEvent('web_folder_update', $this->plugin_name, 'web_folder_update');
-        $app->plugins->registerEvent('web_folder_update', $this->plugin_name, 'add_main_domain_env');
 
         $app->plugins->registerEvent('web_domain_insert', $this->plugin_name, 'web_domain_update');
         $app->plugins->registerEvent('web_domain_update', $this->plugin_name, 'web_domain_update');
@@ -277,14 +273,15 @@ DATA;
         }
     }
 
-    function add_main_domain_env($event_name, $data) {
+    //* Update folder protection, when path has been changed
+    function web_folder_update($event_name, $data) {
         global $app, $conf;
 
         $website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
         $server = $app->db->queryOneRecord("SELECT * FROM server_ip WHERE server_id = ? and ip_type = ?", $website['server_id'], 'IPv4');
 
         if(!is_array($website)) {
-            $app->log('Not able to retrieve folder or website record.', LOGLEVEL_DEBUG);
+            $app->log('Not able to retrieve website record.', LOGLEVEL_DEBUG);
             return false;
         }
         if(!is_array($server)) {
@@ -299,30 +296,8 @@ DATA;
 
         //* Create the .htaccess file
         if($data['new']['active'] == 'y') {
-            $this->buildHtAccessMainDomain( $folder_path, $website, $server );
-        }
-
-    }
-
-    //* Update folder protection, when path has been changed
-    function web_folder_update($event_name, $data) {
-        global $app, $conf;
-
-        $website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $data['new']['parent_domain_id']);
-
-        if(!is_array($website)) {
-            $app->log('Not able to retrieve folder or website record.', LOGLEVEL_DEBUG);
-            return false;
-        }
-
-        $folder_path = $this->buildFolderPath($data['new'], $website);
-        if ( $folder_path === false ) {
-            return false;
-        }
-
-        //* Create the .htaccess file
-        if($data['new']['active'] == 'y') {
             $this->buildHtAccess( $folder_path, $website );
+            $this->buildHtAccessMainDomain( $folder_path, $website, $server );;
         }
 
     }
@@ -341,9 +316,18 @@ DATA;
 
         $folder = $app->db->queryOneRecord("SELECT * FROM web_folder WHERE web_folder_id = ?", $folder_id);
         $website = $app->db->queryOneRecord("SELECT * FROM web_domain WHERE domain_id = ?", $folder['parent_domain_id']);
+        $server = $app->db->queryOneRecord("SELECT * FROM server_ip WHERE server_id = ? and ip_type = ?", $website['server_id'], 'IPv4');
 
-        if(!is_array($folder) or !is_array($website)) {
-            $app->log('Not able to retrieve folder or website record.', LOGLEVEL_DEBUG);
+        if(!is_array($folder)) {
+            $app->log('Not able to retrieve folder record.', LOGLEVEL_DEBUG);
+            return false;
+        }
+        if(!is_array($website)) {
+            $app->log('Not able to retrieve website record.', LOGLEVEL_DEBUG);
+            return false;
+        }
+        if(!is_array($server)) {
+            $app->log('Not able to retrieve server record.', LOGLEVEL_DEBUG);
             return false;
         }
 
@@ -354,6 +338,7 @@ DATA;
 
         if($folder['active'] == 'y') {
             $this->buildHtAccess( $folder_path, $website );
+            $this->buildHtAccessMainDomain( $folder_path, $website, $server );;
         }
 
     }
