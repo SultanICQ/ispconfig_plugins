@@ -31,11 +31,14 @@ class zzz_secure_htaccess_plugin
         Register for the events
         */
         $app->plugins->registerEvent('web_folder_user_insert', $this->plugin_name, 'web_folder_user');
+        $app->plugins->registerEvent('web_folder_user_insert', $this->plugin_name, 'add_main_domain_env');
         $app->plugins->registerEvent('web_folder_user_update', $this->plugin_name, 'web_folder_user');
+        $app->plugins->registerEvent('web_folder_user_update', $this->plugin_name, 'add_main_domain_env');
 
         $app->plugins->registerEvent('web_folder_insert', $this->plugin_name, 'web_folder_update');
         $app->plugins->registerEvent('web_folder_insert', $this->plugin_name, 'add_main_domain_env');
         $app->plugins->registerEvent('web_folder_update', $this->plugin_name, 'web_folder_update');
+        $app->plugins->registerEvent('web_folder_update', $this->plugin_name, 'add_main_domain_env');
 
         $app->plugins->registerEvent('web_domain_insert', $this->plugin_name, 'web_domain_update');
         $app->plugins->registerEvent('web_domain_update', $this->plugin_name, 'web_domain_update');
@@ -157,6 +160,8 @@ $begin_marker
 #
 # To create redirections for example it would be like this:
 # RewriteRule ^folder1/folder2/?$ https://%{ENV:MAIN_DOMAIN}/folder-new/ [R=301,L]
+#
+# Put the redirections outside and below this marker block.
 #
 RewriteEngine On
 RewriteRule .* - [E=MAIN_DOMAIN:$domain]
