@@ -1,1 +1,3 @@
 www/*
+!www/.gitkeep
+plugins/zzz_secure_htaccess_plugin.config.local.php
